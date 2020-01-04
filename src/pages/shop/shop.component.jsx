@@ -2,56 +2,30 @@ import React, { Component } from 'react';
 import { Route } from 'react-router-dom';
 import { connect } from 'react-redux';
 
-import WithSpinner from '../../components/with-spinner/with-spinner.component';
-import CollectionsOverview from '../../components/collections-overview/collections-overview.component';
-import CollectionPage from '../collection/collection.component';
+import CollectionsOverviewContainer from '../../components/collections-overview/collections-overview.container';
+import CollectionsPageContainer from '../collection/collection.container';
 
-import { updateCollections } from '../../redux/shop/shop.actions';
-
-import {
-	firestore,
-	convertCollectionsSnapshotToMap
-} from '../../firebase/firebase.utils';
+import { fetchCollectionsStart } from '../../redux/shop/shop.actions';
 
 import './shop.styles.scss';
 
-const CollectionsOverviewWithSpinner = WithSpinner(CollectionsOverview);
-const CollectionPageWithSpinner = WithSpinner(CollectionPage);
-
 class ShopPage extends Component {
-	state = {
-		loading: true
-	};
-
-	unsubscribeFromSnapshot = null;
-
 	componentDidMount() {
-		const collectionRef = firestore.collection('collections');
-
-		collectionRef.onSnapshot(async snapshot => {
-			const collectionsMap = convertCollectionsSnapshotToMap(snapshot);
-			this.props.updateCollections(collectionsMap);
-			this.setState({ loading: false });
-		});
+		this.props.fetchCollections();
 	}
 
 	render() {
 		const { match } = this.props;
-		const { loading } = this.state;
 		return (
 			<div className="shop-page">
 				<Route
 					exact
 					path={`${match.path}`}
-					render={props => (
-						<CollectionsOverviewWithSpinner isLoading={loading} {...props} />
-					)}
+					component={CollectionsOverviewContainer}
 				/>
 				<Route
 					path={`${match.path}/:collectionId`}
-					render={props => (
-						<CollectionPageWithSpinner isLoading={loading} {...props} />
-					)}
+					component={CollectionsPageContainer}
 				/>
 			</div>
 		);
@@ -59,8 +33,7 @@ class ShopPage extends Component {
 }
 
 const mapDispatchToProps = dispatch => ({
-	updateCollections: collectionsMap =>
-		dispatch(updateCollections(collectionsMap))
+	fetchCollections: () => dispatch(fetchCollectionsStart())
 });
 
 export default connect(null, mapDispatchToProps)(ShopPage);
